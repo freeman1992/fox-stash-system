@@ -8,7 +8,10 @@ modded class MissionServer
         }
         super.OnInit();
         FOX_LootManager.GetInstance().Init();
-        GetDayZGame().SetObjectSearchObjects(FOX_LootManager.GetInstance().GetValidObjects());
         SearchedObjectLogger.Init();
+        
+        GetDayZGame().SetObjectSearchObjects(FOX_LootManager.GetInstance().GetValidObjects());
+        
+        
     }
 };

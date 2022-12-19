@@ -28,9 +28,10 @@ class FOX_LootConfig
         this.presets.Insert(preset);
     }
 
-    void AddObject(string className)
+    void AddType(string className, int lootId)
     {
         this.objects.Insert(className);
+        GetLootById(lootId).AddType(className);
     }
 
     FOX_LootDefinition GetLootById(int id)

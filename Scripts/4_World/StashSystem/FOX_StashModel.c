@@ -17,10 +17,10 @@ class FOX_StashModel
         this.allFromCategory = false;
         this.allFromPresets = false;
         this.globalDelay = 0;
-        this.staticLoot = new array<FOX_StashStatic>();
-        this.categories = new TStringArray();
-        this.presets = new TStringArray();
-        this.triggers = new array<FOX_LootTrigger>();
+        this.staticLoot = new ref array<ref FOX_StashStatic>();
+        this.categories = new ref TStringArray();
+        this.presets = new ref TStringArray();
+        this.triggers = new ref array<ref FOX_LootTrigger>();
     }
 
     void SetState(bool state)
@@ -30,7 +30,7 @@ class FOX_StashModel
 
     void SetDelay(int delay)
     {
-        this.delay = delay;
+        this.globalDelay = delay;
     }
 
     void AddStaticLoot(bool state, TStringArray types, TStringArray presets, int delay)

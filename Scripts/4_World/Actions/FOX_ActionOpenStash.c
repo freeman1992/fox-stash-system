@@ -36,19 +36,19 @@ class FOX_ActionOpenStash : ActionContinuousBase
         {
             return false;
         }
-
+        
         if (!targetObject.IsSearchable)
         {
             return false;
         }
-
+        
         return true;
     }
 
     // Succesful finish of the action
     override void OnFinishProgressServer(ActionData action_data)
     {
-        Object targetObject = action_data.m_Target.GetObject();
-        FOX_LootManager.GetInstance().Loot(targetObject);
+        Print("[LootSystem]: OnFinishProgressServer");
+        FOX_LootManager.GetInstance().Loot(action_data.m_Target.GetObject());
     }
 };

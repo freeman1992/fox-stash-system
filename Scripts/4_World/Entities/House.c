@@ -8,8 +8,8 @@ modded class House
     
     void LoadPoints()
     {
+        Print("[ObjectSearch]: LoadPoints");
         SearchedObjectLogger.Log("[" + this.GetType() + "][" + GetPosition() + "][" + GetOrientation() + "]");
-        IsSearchable = true;
     }
 
     override void DeferredInit()
@@ -19,18 +19,21 @@ modded class House
         {
             return;
         }
-
-        if(!GetDayZGame().IsValid(this.GetType()))
+        
+        IsSearchable = GetDayZGame().IsValidSearchable(this.GetType());
+        if(!IsSearchable)
         {
             return;
         }
 
+        Print("[ObjectSearch]: " + this.GetType() + " IsSearchable - " + IsSearchable);
         GetGame().GetCallQueue(CALL_CATEGORY_GAMEPLAY).CallLater(this.LoadPoints, 500, false);
     }
 
     override void SetActions()
     {
         super.SetActions();
+        Print("[ObjectSearch]: SetActions - " + this.GetType() + " - " + IsSearchable);
         AddAction(FOX_ActionOpenStash);
     }
 

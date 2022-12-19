@@ -10,4 +10,15 @@ class FOX_LootDefinition
         this.model = new ref FOX_StashModel(id);
     }
 
+    void AddType(string type)
+    {
+        this.types.Insert(type);
+    }
+
+    void ~FOX_LootDefinition()
+    {
+        delete this.types;
+        delete this.model;
+    }
+
 };
