@@ -10,6 +10,12 @@ class FOX_LootPreset
         this.id = id;
         this.model = model;
     }
+
+    static void Spawn(ref FOX_LootPreset preset, vector position, bool spawnAll)
+    {
+        FOX_LootManager.SpawnLoot(preset.model.className, position);
+        // TODO add attachments if all 
+    }
 };
 
 class FOX_LootPresetModel

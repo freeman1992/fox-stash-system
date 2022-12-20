@@ -7,10 +7,13 @@ class FOX_LootManager
 
     ref FOX_LootConfig _config;
 
-    protected static ref TStringSet s_objects;
-    protected ref map<int, ref FOX_StashModel> s_stashes;
-    protected ref map<string, ref FOX_LootPreset> s_presets;
-    protected ref map<string, ref FOX_LootCategory> s_categories;
+    protected ref TStringSet _objects;
+
+    protected ref map<string, ref FOX_LootPreset> _presets;
+    protected ref map<string, ref FOX_LootCategory> _categories;
+    protected ref map<string, ref FOX_StashModel> _lootDB;
+    protected ref map<string, ref array<ref FOX_StashStatic>> _statics;
+
 	protected bool s_isLoaded = false;
     
     // Singleton
@@ -94,16 +97,20 @@ class FOX_LootManager
     
     ref TStringSet GetValidObjects()
     {
-        return s_objects;
+        return _objects;
     }
 
     void InitData()
     {
         // TODO: Load the data to the instance of LootManager and keep the tracking
         InitObjects(_config.objects);
-        // InitPresets(config.presets);
-        // InitCategories(config.categories);
-        // InitLoot(config.loot);
+        // TODO: Load the loot stashes into the loot manager as copy 
+        InitLoot(_config.loot);
+        // TODO: Load the presets (make copies from the config to LootManager)
+        InitPresets(_config.presets);
+        // TODO: Load the categories (make copies from the config to LootManager)
+        InitCategories(_config.categories);
+        // TODO: Load static definitions by stash id
         Print("[LootManager]: Initialized...");
         s_isLoaded = true;
     }
@@ -111,89 +118,94 @@ class FOX_LootManager
     void InitObjects(ref TStringArray objects)
     {
         Print("[LootManager]: Init objects");
-        if(!s_objects)
+        if(!_objects)
         {
-            s_objects = new TStringSet();
+            _objects = new TStringSet();
         }
 
         for(int i = 0; i < objects.Count(); i++)
         {
-            s_objects.Insert(objects[i]);
+            _objects.Insert(objects[i]);
             Print("[LootManager]: Adding new object to loot manager - " + objects[i]);
+        }
+    }
+
+    void InitLoot(ref array<ref FOX_LootDefinition> loot)
+    {
+        Print("[LootManager]: Init loot");
+        if(!_lootDB)
+        {
+            _lootDB = new map<string, ref FOX_StashModel>();
+        }
+
+        Print("[LootManager]: Init loot for " + loot.Count() + " loot definitions");
+
+        for(int i = 0; i < loot.Count(); i++)
+        {
+            for(int k = 0; k < loot[i].types.Count(); k++)
+            {
+                Print("[LootManager]: Loading loot stash with id " + loot[i].model._id + "  for " + loot[i].types[k]);
+                _lootDB.Insert(loot[i].types[k], loot[i].model);
+            }
+        }
+    }
+
+    void InitCategories(ref array<ref FOX_LootCategory> categories)
+    {
+        Print("[LootManager]: Init categories");
+        if(!_categories)
+        {
+            _categories = new map<string, ref FOX_LootCategory>();
+        }
+
+        for(int i = 0; i < categories.Count(); i++)
+        {
+            _categories.Insert(categories[i].id, categories[i]);
+            Print("[LootManager]: Adding new category to loot manager - " + categories[i].id);
         }
     }
 
     void InitPresets(ref array<ref FOX_LootPreset> presets)
     {
         Print("[LootManager]: Init presets");
-        return;
+        if(!_presets)
+        {
+            _presets = new map<string, ref FOX_LootPreset>();
+        }
+
+        for(int i = 0; i < presets.Count(); i++)
+        {
+            _presets.Insert(presets[i].id, presets[i]);
+            Print("[LootManager]: Adding new preset to loot manager - " + presets[i].id);
+        }
     }
 
-    void InitCategories(ref array<ref FOX_LootCategory> categories)
-    {
-        Print("[LootManager]: Init categories");
-        return;
-    }
 
-    void InitStashes(ref array<ref FOX_StashModel> stashes)
-    {
-        Print("[LootManager]: Init stashes");
-        return;
-    }
 
-    // LOOT MECHANICS
-
+    // Looting mechanic
     void Loot(ref Object object)
     {
         Print("[LootManager]: Looting object." + object.GetType());
 
-        TStringArray lootResult;
-        GetLootForType(object.GetType(), lootResult);
-
-        if(!lootResult)
+        if(!_lootDB)
         {
-            Print("[LootManager]: No loot found for object: " + object.GetType());
+            Print("[LootManager]: No loot db initialized!");
             return;
         }
 
-        if(lootResult.Count() == 0)
-        {
-            Print("[LootManager]: No loot found for object: " + object.GetType());
-            return;
-        }
-
-        for(int i = 0; i < lootResult.Count(); i++)
-        {
-            Print("[LootManager]: Loot result: " + lootResult[i]);
-        }
-    }
-    
-    bool GetLootForType(string className, out TStringArray lootTypes)
-    {
-        Print("[LootManager]: Get loot for type - " + className);
-        // TODO: FIX THIS NULL pointer for variable loot
-        FOX_StashModel stashModel;
-        for(int i = 0; i < _config.loot.Count(); i++)
-        {
-            if(_config.loot[i].types.Find(className) < 0)
-            {
-                continue;
-            }
-            Print("[LootManager]: Found stash ID:" + _config.loot[i].model._id + " for " + className);
-            stashModel = _config.loot[i].model;
-        }
-
+        FOX_StashModel stashModel = _lootDB.Get(object.GetType());
         if(!stashModel)
         {
-            Print("[LootManager]: Could not find a stash model for - " + className);
-            return false;
+            Print("[LootManager]: No loot stash for given type: " + object.GetType());
+            return;
         }
-
-        ValidateLoot(stashModel, lootTypes);
-        return true;
+       
+        vector lootPosition = object.GetPosition();
+        ValidateLoot(stashModel, lootPosition);
     }
+    
 
-    void ValidateLoot(FOX_StashModel model, out TStringArray lootTypes)
+    void ValidateLoot(ref FOX_StashModel model, vector position)
     {
         bool spawnPreset = model.presets && model.presets.Count() > 0;
         bool spawnCategory = model.categories && model.categories.Count() > 0;
@@ -201,20 +213,89 @@ class FOX_LootManager
         
         if(model.presets && model.presets.Count() > 0)
         {
-            string randomPreset = model.presets.GetRandomElement();
-            Print("[LootManager]: Getting random element from presets - " + randomPreset);
+            for(int i = 0; i < model.presets.Count(); i++)
+            {
+                ref FOX_LootPreset preset;
+                if(!TryGetLootPreset(model.presets[i], preset))
+                {
+                    continue;
+                }
+
+                SpawnPreset(preset, position, model.allFromPresets);
+            }
         }
 
         if(model.categories && model.categories.Count() > 0)
         {
-            string randomCategory = model.categories.GetRandomElement();
-            Print("[LootManager]: Getting random element from category - " + randomCategory);
+            for(int c = 0; c < model.categories.Count(); c++)
+            {
+                ref FOX_LootCategory category;
+                if(!TryGetCategory(model.categories[c], category))
+                {
+                    continue;
+                }
+                SpawnCategory(category, position, model.allFromCategory);
+            }
+        }
+
+        if(model.staticLoot && model.staticLoot.Count() > 0)
+        {
+            for(int s = 0; s < model.staticLoot.Count(); s++)
+            {
+                SpawnStatic(model.staticLoot[s], position);
+            }
         }
     }
-
-    void SpawnLoot(string itemClassName, bool isPreset = false, int quantity = 1)
+    // Spawns the static loot everytime
+    void SpawnStatic(ref FOX_StashStatic staticStash, vector position)
     {
-        
+        FOX_StashStatic.Spawn(staticStash, position);
+    }
+
+    // Spawns the item from the category or all, if the given parameter is true
+    void SpawnCategory(ref FOX_LootCategory category, vector position, bool spawnAll = false)
+    {
+        FOX_LootCategory.Spawn(category, position, spawnAll);
+    }
+
+    void SpawnPreset(ref FOX_LootPreset preset, vector position, bool spawnAll = false)
+    {
+        FOX_LootPreset.Spawn(preset, position, spawnAll);
+    }
+
+
+    static void SpawnLoot(string className, vector position)
+    {
+        Print("[LootManager]: Spawning item " + className + " on position: " + position);
+        ItemBase item = ItemBase.Cast(GetGame().CreateObjectEx(className, position, ECE_PLACE_ON_SURFACE ));
+    }
+
+
+
+    // Getters
+
+    bool TryGetLootPreset(string id, out FOX_LootPreset preset)
+    {
+        preset = null;
+        if(!_presets)
+        {
+            return false;
+        }
+
+        preset = _presets.Get(id);
+        return true;
+    }
+
+    bool TryGetCategory(string id, out ref FOX_LootCategory category)
+    {
+        category = null;
+        if(!_categories)
+        {
+            return false;
+        }
+
+        category = _categories.Get(id);
+        return true;
     }
 
     
