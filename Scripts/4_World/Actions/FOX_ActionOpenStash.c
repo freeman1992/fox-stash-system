@@ -30,18 +30,16 @@ class FOX_ActionOpenStash : ActionContinuousBase
 
     override bool ActionCondition(PlayerBase player, ActionTarget target, ItemBase item)
     {
-        // here comes the condition logic
+        // Here comes the condition logic
         House targetObject = House.Cast(target.GetObject());
         if (!targetObject)
         {
             return false;
         }
-        
         if (!targetObject.IsSearchable)
         {
             return false;
         }
-        
         return true;
     }
 
@@ -49,6 +47,28 @@ class FOX_ActionOpenStash : ActionContinuousBase
     override void OnFinishProgressServer(ActionData action_data)
     {
         Print("[LootSystem]: OnFinishProgressServer");
-        FOX_LootManager.GetInstance().Loot(action_data.m_Target.GetObject());
+        House targetObject = House.Cast(action_data.m_Target.GetObject());
+        if (!targetObject)
+        {
+            return;
+        }
+        
+        if (!targetObject.IsSearchable)
+        {
+            return;
+        }
+
+        if(!targetObject.IsLootable)
+        {
+            // FOX_LootManager.SendPlayerMessage(action_data.m_Player, "Stash is already looted.");
+            NotificationSystem.SimpleNoticiation("The stash has been already looted.");
+            // NotificationSystem.SimpleNoticiation("The stash has been already looted.", "Notification/gui/data/notifications.edds", ARGB(240, 200, 20, 20), 10, PlayerIdentity);
+            return;
+        }
+        NotificationSystem.SimpleNoticiation("Here comes the Santa Claus!");
+        // NotificationSystem.SimpleNoticiation("The stash has been already looted.", "Notification/gui/data/notifications.edds", ARGB(164,255,164,1.000), 10, PlayerIdentity);
+        FOX_LootManager.GetInstance().Loot(action_data.m_Player, action_data.m_Target.GetObject());
+        // Sets the cooldown to be lootable again
+        targetObject.SetAsNonLootable(FOX_LootManager.GetInstance().GlobalCooldown);
     }
 };

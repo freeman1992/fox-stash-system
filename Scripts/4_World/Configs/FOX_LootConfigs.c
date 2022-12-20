@@ -1,5 +1,15 @@
 class FOX_LootConfig
 {
+    // Debug and settings
+    bool DebugSearch = true;
+    bool DebugPlayers = true;
+    bool DebugManager = true;
+    //
+    // GlobalCooldown (can be set to -1, so the stash is not respawned at all until the next restart)
+    //  (miliseconds)
+    int GlobalCooldown = 10000;
+
+    // Collections
     ref array<ref FOX_LootDefinition> loot;
     ref array<ref FOX_LootCategory> categories;
     ref array<ref FOX_LootPreset> presets;
@@ -7,6 +17,10 @@ class FOX_LootConfig
 
     void FOX_LootConfig()
     {
+        this.DebugSearch = true;
+        this.DebugPlayers = true;
+        this.DebugManager = true;
+        this.GlobalCooldown = 10000;
         this.loot = new ref array<ref FOX_LootDefinition>();
         this.categories = new ref array<ref FOX_LootCategory>();
         this.presets = new ref array<ref FOX_LootPreset>();

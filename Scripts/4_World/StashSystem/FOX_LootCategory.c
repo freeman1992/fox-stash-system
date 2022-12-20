@@ -11,7 +11,7 @@ class FOX_LootCategory
         this.presets = presets;
     }
 
-    static void Spawn(ref FOX_LootCategory category, vector position, bool spawnAll)
+    static void Spawn(ref FOX_LootCategory category, vector position, bool spawnAll, int numFromCategory = 1)
     {
 
         if(!category.types && !category.presets)
@@ -21,35 +21,40 @@ class FOX_LootCategory
         }
 
         ref FOX_LootPreset preset;
-        if(spawnAll)
+        for(int num = 0; num < numFromCategory; num++)
         {
-            for(int t = 0; t < category.types.Count(); t++)
+            if(spawnAll)
             {
-                FOX_LootManager.SpawnLoot(category.types[t], position);
-            }
-
-            for(int p = 0; p < category.presets.Count(); p++)
-            {
-                
-                if(!FOX_LootManager.GetInstance().TryGetLootPreset(category.presets[p], preset))
+            
+                for(int t = 0; t < category.types.Count(); t++)
                 {
-                    continue;
+                    FOX_LootManager.SpawnLoot(FOX_ELootType.Default, category.types[t], position);
                 }
 
-                FOX_LootPreset.Spawn(preset, position, true);
-            }
+                for(int p = 0; p < category.presets.Count(); p++)
+                {
+                
+                    if(!FOX_LootManager.GetInstance().TryGetLootPreset(category.presets[p], preset))
+                    {
+                        continue;
+                    }
 
-        }
-        else
-        {
-            FOX_LootManager.SpawnLoot(category.types.GetRandomElement(), position);
-            string presetId = category.presets.GetRandomElement();
-            if(!FOX_LootManager.GetInstance().TryGetLootPreset(category.presets[p], preset))
-            {
-                return;
+                    FOX_LootPreset.Spawn(preset, position, true);
+                }
             }
-            FOX_LootPreset.Spawn(preset, position, false);
+            else
+            {
+                FOX_LootManager.SpawnLoot(FOX_ELootType.Default, category.types.GetRandomElement(), position);
+                string presetId = category.presets.GetRandomElement();
+                if(!FOX_LootManager.GetInstance().TryGetLootPreset(presetId, preset))
+                {
+                    return;
+                }
+                FOX_LootPreset.Spawn(preset, position, false);
+            }
         }
+        
+        
     }
     
 }

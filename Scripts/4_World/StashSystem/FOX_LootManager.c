@@ -1,6 +1,12 @@
 class FOX_LootManager
 {
 
+    enum FOX_ELootType
+    {
+        Default,
+        Weapon
+    }
+
     static const string PATH = "$profile:\\FoxApo";
     static const string FOLDER_NAME = "\\StashSystem";
     static const string FILE_NAME = "\\LootConfig.json";
@@ -8,13 +14,17 @@ class FOX_LootManager
     ref FOX_LootConfig _config;
 
     protected ref TStringSet _objects;
-
     protected ref map<string, ref FOX_LootPreset> _presets;
     protected ref map<string, ref FOX_LootCategory> _categories;
     protected ref map<string, ref FOX_StashModel> _lootDB;
     protected ref map<string, ref array<ref FOX_StashStatic>> _statics;
 
 	protected bool s_isLoaded = false;
+
+    bool IsDebugPlayers = false;    // TODO: manage to create a better logging system
+    bool IsDebugSearch = false;
+    bool IsDebugManager = false;
+    int GlobalCooldown = -1;
     
     // Singleton
     protected static ref FOX_LootManager s_instance;
@@ -73,10 +83,10 @@ class FOX_LootManager
         _config.AddLoot(new FOX_LootDefinition(1));
         _config.AddLoot(new FOX_LootDefinition(33));
         _config.AddCategory(new FOX_LootCategory("tools", {"Hammer", "Hacksaw"}, {"Headtorch"}));
-        _config.AddCategory(new FOX_LootCategory("weapons", {"AKM", "AK101", "AK74"}, {"FullAK", "FullM4"}));
-        _config.AddPreset(new FOX_LootPreset("Headtorch", new FOX_LootPresetModel("Headtorch_Black", {"Battery9V"})));
-        _config.AddPreset(new FOX_LootPreset("FullAK", new FOX_LootPresetModel("AK101", {"Mag_AK101_30Rnd", "PSO1Optic", "AK_Suppressor"})));
-        _config.AddPreset(new FOX_LootPreset("FullM4", new FOX_LootPresetModel("M4A1_Green", {"M4_OEBttstck", "Mag_CMAG_40Rnd", "M4_T3NRDSOptic", "M4_Suppressor"})));
+        _config.AddCategory(new FOX_LootCategory("weapons", /* Types */ {"AKM", "AK101", "AK74"}, /*Presets*/ {"FullAK", "FullM4"}));
+        _config.AddPreset(new FOX_LootPreset("Headtorch", new FOX_LootPresetModel("Headtorch_Black", {"Battery9V"}, "", FOX_ELootType.Default)));
+        _config.AddPreset(new FOX_LootPreset("FullAK", new FOX_LootPresetModel("AK74", {"PSO1Optic","AK_Suppressor","AK_PlasticBttstck","AK_PlasticHndgrd"}, "Mag_AK74_45Rnd", FOX_ELootType.Weapon)));
+        _config.AddPreset(new FOX_LootPreset("FullM4", new FOX_LootPresetModel("M4A1_Green", {"M4_T3NRDSOptic", "M4_Suppressor", "M4_CQBBttstck", "M4_MPHndgrd"}, "Mag_CMAG_40Rnd", FOX_ELootType.Weapon)));
 
         // TODO: Refactor here at the config level and loot definition
         // Adding methods on higher level so not need to direct access of model
@@ -102,6 +112,11 @@ class FOX_LootManager
 
     void InitData()
     {
+        this.GlobalCooldown = _config.GlobalCooldown;
+        this.IsDebugPlayers = _config.DebugPlayers;
+        this.IsDebugSearch = _config.DebugSearch;
+        this.IsDebugManager = _config.DebugManager;
+
         // TODO: Load the data to the instance of LootManager and keep the tracking
         InitObjects(_config.objects);
         // TODO: Load the loot stashes into the loot manager as copy 
@@ -137,9 +152,7 @@ class FOX_LootManager
         {
             _lootDB = new map<string, ref FOX_StashModel>();
         }
-
         Print("[LootManager]: Init loot for " + loot.Count() + " loot definitions");
-
         for(int i = 0; i < loot.Count(); i++)
         {
             for(int k = 0; k < loot[i].types.Count(); k++)
@@ -183,9 +196,9 @@ class FOX_LootManager
 
 
     // Looting mechanic
-    void Loot(ref Object object)
+    void Loot(ref PlayerBase player, ref Object object)
     {
-        Print("[LootManager]: Looting object." + object.GetType());
+        Print("[LootManager]: Looting " + object.GetType());
 
         if(!_lootDB)
         {
@@ -193,14 +206,14 @@ class FOX_LootManager
             return;
         }
 
-        FOX_StashModel stashModel = _lootDB.Get(object.GetType());
+        ref FOX_StashModel stashModel = _lootDB.Get(object.GetType());
         if(!stashModel)
         {
             Print("[LootManager]: No loot stash for given type: " + object.GetType());
             return;
         }
        
-        vector lootPosition = object.GetPosition();
+        vector lootPosition = player.GetPosition();
         ValidateLoot(stashModel, lootPosition);
     }
     
@@ -234,7 +247,7 @@ class FOX_LootManager
                 {
                     continue;
                 }
-                SpawnCategory(category, position, model.allFromCategory);
+                SpawnCategory(category, position, model.allFromCategory, model.numFromCategory);
             }
         }
 
@@ -253,9 +266,9 @@ class FOX_LootManager
     }
 
     // Spawns the item from the category or all, if the given parameter is true
-    void SpawnCategory(ref FOX_LootCategory category, vector position, bool spawnAll = false)
+    void SpawnCategory(ref FOX_LootCategory category, vector position, bool spawnAll = false, int numFromCategory = 1)
     {
-        FOX_LootCategory.Spawn(category, position, spawnAll);
+        FOX_LootCategory.Spawn(category, position, spawnAll, numFromCategory);
     }
 
     void SpawnPreset(ref FOX_LootPreset preset, vector position, bool spawnAll = false)
@@ -264,16 +277,61 @@ class FOX_LootManager
     }
 
 
-    static void SpawnLoot(string className, vector position)
+    static void SpawnLoot(FOX_ELootType lootType, string className, vector position, ref FOX_LootPresetModel model = null)
     {
-        Print("[LootManager]: Spawning item " + className + " on position: " + position);
-        ItemBase item = ItemBase.Cast(GetGame().CreateObjectEx(className, position, ECE_PLACE_ON_SURFACE ));
+        switch(lootType)
+		{
+			case FOX_ELootType.Weapon:
+				SpawnWeaponPreset(model, position);
+			    break;
+            default:
+                SpawnDefaultItem(className, position, model);
+                break;
+		}
     }
 
+    static void SpawnDefaultItem(string className, vector position, ref FOX_LootPresetModel model = null)
+    {
+        Print("[LootManager]: Spawning item " + className + " on position: " + position);
+        EntityAI entityAI = EntityAI.Cast(GetGame().CreateObjectEx(className, position, ECE_PLACE_ON_SURFACE ));
+        if(!entityAI)
+        {
+            Print("[LootManager]: Could not cast EntityAI on " + className);
+            return;
+        }
 
+        if(!model)
+        {
+            return;
+        }
+
+        if(!model.attachments)
+        {
+            return;
+        }
+
+        for(int a = 0; a < model.attachments.Count(); a++)
+        {
+            entityAI.GetInventory().CreateAttachment(model.attachments[a]);
+        }
+    }
+
+    // Helper method for weapon spawns
+    static void SpawnWeaponPreset(ref FOX_LootPresetModel model, vector position)
+    {
+        Weapon_Base oWpn = Weapon_Base.Cast(GetGame().CreateObjectEx(model.className, position, ECE_PLACE_ON_SURFACE ));
+        for(int a = 0; a < model.attachments.Count(); a++)
+        {
+            oWpn.GetInventory().CreateAttachment(model.attachments[a]);
+        }
+
+        if(model.magazine && model.magazine != "")
+        {
+            oWpn.SpawnAmmo(model.magazine);
+        }
+    }
 
     // Getters
-
     bool TryGetLootPreset(string id, out FOX_LootPreset preset)
     {
         preset = null;
@@ -298,6 +356,12 @@ class FOX_LootManager
         return true;
     }
 
-    
+    // Messaging method
+    static void SendPlayerMessage(PlayerBase player, string message)
+    {
+        Param1<string> Msgparam;
+        Msgparam = new Param1<string>(message);
+        GetGame().RPCSingleParam(player, ERPCs.RPC_USER_ACTION_MESSAGE, Msgparam, true, player.GetIdentity());
+    }
 
 };

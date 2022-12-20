@@ -3,7 +3,9 @@ class FOX_StashModel
     int _id;
     bool state;
     bool allFromCategory;
+    int numFromCategory = 3;
     bool allFromPresets;
+    int numFromPresets = 3;
     int globalDelay;
     ref TStringArray categories;
     ref TStringArray presets;
@@ -15,7 +17,9 @@ class FOX_StashModel
         this._id = id;
         this.state = true;
         this.allFromCategory = false;
+        this.numFromCategory = 1;
         this.allFromPresets = false;
+        this.numFromPresets = 1;
         this.globalDelay = 0;
         this.staticLoot = new ref array<ref FOX_StashStatic>();
         this.categories = new ref TStringArray();
@@ -31,6 +35,16 @@ class FOX_StashModel
     void SetDelay(int delay)
     {
         this.globalDelay = delay;
+    }
+
+    void SetNumFromCategory(int num)
+    {
+        this.numFromCategory = num;
+    }
+
+    void SetNumFromPresets(int num)
+    {
+        this.numFromPresets = num;
     }
 
     void AddStaticLoot(bool state, TStringArray types, TStringArray presets, int delay)
