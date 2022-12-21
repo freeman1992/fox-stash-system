@@ -18,8 +18,19 @@ modded class House
         {
             return;
         }
-        
-        IsSearchable = GetDayZGame().IsValidSearchable(this.GetType());
+
+        // TODO Change this after testing 
+        if(this.GetType() == "Land_ds_kpp_building")
+        {
+            Print("Land_ds_kpp_building extra condition");
+            SetLootableComponent(33);
+            return;
+        }
+        else
+        {
+            IsSearchable = GetDayZGame().IsValidSearchable(this.GetType());
+        }
+
         IsLootable = false;
         SetSynchDirty();
         if(!IsSearchable)
@@ -35,8 +46,13 @@ modded class House
     override void SetActions()
     {
         super.SetActions();
+        AddAction(FOX_ActionInspectStash);
+        // TODO: Remove later 
         if(IsSearchable){
             AddAction(FOX_ActionOpenStash);
+        }else
+        {
+            RemoveAction(FOX_ActionOpenStash);
         }
     }
 
@@ -51,6 +67,16 @@ modded class House
     override bool OnStoreLoad(ParamsReadContext ctx, int version)
     {
         return true;
+    }
+
+    void SetLootableComponent(int index)
+    {
+        EntityAI entity = EntityAI.Cast(this);
+        Component targetComponent = entity.GetComponent(index, "Lootable component");
+        if(targetComponent)
+        {
+            Print("[LootSystem]: Setting " + targetComponent + " as lootable.");
+        }
     }
 
     // CUSTOM METHODS

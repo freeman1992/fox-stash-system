@@ -11,6 +11,7 @@ class FOX_StashModel
     ref TStringArray presets;
     ref array<ref FOX_StashStatic> staticLoot;
     ref array<ref FOX_LootTrigger> triggers;
+    vector positionlock;
 
     void FOX_StashModel(int id)
     {

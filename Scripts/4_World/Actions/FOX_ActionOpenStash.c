@@ -20,7 +20,7 @@ class FOX_ActionOpenStash : ActionContinuousBase
     override void CreateConditionComponents()
     {
         m_ConditionItem = new CCINone;
-        m_ConditionTarget = new CCTObject(1.8);
+        m_ConditionTarget = new CCTCursor;
     }
 
     override string GetText()
@@ -31,12 +31,27 @@ class FOX_ActionOpenStash : ActionContinuousBase
     override bool ActionCondition(PlayerBase player, ActionTarget target, ItemBase item)
     {
         // Here comes the condition logic
-        House targetObject = House.Cast(target.GetObject());
-        if (!targetObject)
+
+        // DEVEL -----------------
+        // Building building;
+        // Class.CastTo(building, target.GetParent());
+        // if(building){
+        //     array<string> selections = new array<string>;           
+        //     target.GetObject().GetActionComponentNameList(component_id , selections);
+        //     for(int i = 0; i < selections.Count(); i++)
+        //     {
+        //         Print("[LootSystem]: BUILD Selection - " + selections[i]);
+        //     }
+        // }
+
+        // -----------------------
+
+        House houseObject = House.Cast(target.GetObject());
+        if (!houseObject)
         {
             return false;
         }
-        if (!targetObject.IsSearchable)
+        if (!houseObject.IsSearchable)
         {
             return false;
         }

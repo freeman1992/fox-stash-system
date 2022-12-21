@@ -81,7 +81,7 @@ class FOX_LootManager
         
         _config = new FOX_LootConfig();
         _config.AddLoot(new FOX_LootDefinition(1));
-        _config.AddLoot(new FOX_LootDefinition(33));
+        _config.AddLoot(new FOX_LootDefinition(2));
         _config.AddCategory(new FOX_LootCategory("tools", {"Hammer", "Hacksaw"}, {"Headtorch"}));
         _config.AddCategory(new FOX_LootCategory("weapons", /* Types */ {"AKM", "AK101", "AK74"}, /*Presets*/ {"FullAK", "FullM4"}));
         _config.AddPreset(new FOX_LootPreset("Headtorch", new FOX_LootPresetModel("Headtorch_Black", {"Battery9V"}, "", FOX_ELootType.Default)));
@@ -94,12 +94,12 @@ class FOX_LootManager
         _config.GetLootById(1).model.AddPreset("FullAK");
         _config.GetLootById(1).model.AddPreset("FullM4");
 
-        _config.GetLootById(33).model.AddCategory("tools");
-        _config.GetLootById(33).model.AddPreset("Headtorch");
+        _config.GetLootById(2).model.AddCategory("tools");
+        _config.GetLootById(2).model.AddPreset("Headtorch");
         
-        _config.AddType("Land_dead_spetsnaz_1", 1);
+        
         _config.AddType("Land_Furniture_box_metall_case", 1);
-        _config.AddType("Land_Furniture_backpack", 33);
+        _config.AddType("Land_Furniture_backpack", 2);
         
         JsonFileLoader<FOX_LootConfig>.JsonSaveFile(PATH + FOLDER_NAME + FILE_NAME, _config);
         Print("[LootManager]: Default config saved: " + PATH + FOLDER_NAME + FILE_NAME);
@@ -116,6 +116,33 @@ class FOX_LootManager
         this.IsDebugPlayers = _config.DebugPlayers;
         this.IsDebugSearch = _config.DebugSearch;
         this.IsDebugManager = _config.DebugManager;
+
+        // - -----------------------------------------------------------------
+        // DEBUG AND TESTING PART OF CODE - WILL BE PROBABLY REMOVED LATER
+        // - -----------------------------------------------------------------
+        
+        // array<Object> foundObjects;
+        // array<CargoBase> foundCargo;
+        // GetGame().GetObjectsAtPosition(_config.Search.Position.ToVector(), _config.Search.Radius, foundObjects, foundCargo);
+
+        // SearchedObjectLogger.Log("[DEBUG-START]------------------------------------------------");
+        // if(foundObjects)
+        // {
+        //     for(int o = 0; o < foundObjects.Count(); o++)
+        //     {
+        //         SearchedObjectLogger.Log("[DEBUG]: " + foundObjects[o].GetType());
+        //     }
+        // }
+        // if(foundCargo)
+        // {
+        //     for(int f = 0; f < foundCargo.Count(); f++)
+        //     {
+        //         SearchedObjectLogger.Log("[DEBUG]: " + foundCargo[f]);
+        //     }
+        // }
+        // SearchedObjectLogger.Log("[DEBUG--END]------------------------------------------------");
+
+        // - -----------------------------------------------------------------
 
         // TODO: Load the data to the instance of LootManager and keep the tracking
         InitObjects(_config.objects);

@@ -9,11 +9,15 @@ class FOX_LootConfig
     //  (miliseconds)
     int GlobalCooldown = 10000;
 
+
+
     // Collections
     ref array<ref FOX_LootDefinition> loot;
     ref array<ref FOX_LootCategory> categories;
     ref array<ref FOX_LootPreset> presets;
     ref TStringArray objects;
+
+    ref SearchDefinition Search;
 
     void FOX_LootConfig()
     {
@@ -25,6 +29,7 @@ class FOX_LootConfig
         this.categories = new ref array<ref FOX_LootCategory>();
         this.presets = new ref array<ref FOX_LootPreset>();
         this.objects = new ref TStringArray();
+        this.Search = new ref SearchDefinition();
     }
 
     void AddLoot(FOX_LootDefinition loot)
@@ -64,3 +69,15 @@ class FOX_LootConfig
     }
 
 };
+
+class SearchDefinition
+{
+    string Position;
+    int Radius;
+
+    void SearchDefinition()
+    {
+        this.Position = "0 0 0";
+        this.Radius = 0;
+    }
+}

@@ -4,5 +4,6 @@ modded class ActionConstructor
     {
         super.RegisterActions(actions);
         actions.Insert(FOX_ActionOpenStash);
+        actions.Insert(FOX_ActionInspectStash);
     }
 }

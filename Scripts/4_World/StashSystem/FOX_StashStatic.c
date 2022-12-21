@@ -21,7 +21,6 @@ class FOX_StashStatic
             Print("[LootManager]: Spawning type: " + staticStash.types[i] + " from static stash on " + position);
             FOX_LootManager.SpawnLoot(FOX_ELootType.Default, staticStash.types[i], position);
         }
-
         
         ref FOX_LootPreset preset;
         for(int p = 0; p < staticStash.presets.Count(); p++)

@@ -21,6 +21,7 @@ class FOX_LootCategory
         }
 
         ref FOX_LootPreset preset;
+
         for(int num = 0; num < numFromCategory; num++)
         {
             if(spawnAll)
@@ -45,6 +46,11 @@ class FOX_LootCategory
             else
             {
                 FOX_LootManager.SpawnLoot(FOX_ELootType.Default, category.types.GetRandomElement(), position);
+                if(category.presets.Count() == 0)
+                {
+                    return;
+                }
+
                 string presetId = category.presets.GetRandomElement();
                 if(!FOX_LootManager.GetInstance().TryGetLootPreset(presetId, preset))
                 {

@@ -4,5 +4,6 @@ modded class PlayerBase
     {
         super.SetActions();
         AddAction(FOX_ActionOpenStash);
+        AddAction(FOX_ActionInspectStash);
     }
 }
